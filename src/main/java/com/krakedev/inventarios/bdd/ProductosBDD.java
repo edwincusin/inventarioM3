@@ -92,4 +92,42 @@ public class ProductosBDD {
 		return productos;
 	}
 	
+	//
+	//METODO PARA CREAR NUEVO PRODUCTO EN LA BASE DE DATOS
+		public void crear(Producto producto) throws KrakeDevException{
+			Connection con=null;
+			PreparedStatement ps=null;
+			
+			try {
+				con=ConexionBDD.conectar();
+				String consultaSQL="INSERT INTO public.productos(\r\n"
+						+ "	nombre, udm, precio_venta, tiene_iva, coste, categoria, stock)\r\n"
+						+ "	VALUES (?, ?, ?, ?, ?, ?, ?);";
+				ps=con.prepareStatement(consultaSQL);
+				
+				ps.setString(1, producto.getNombre());
+				ps.setString(2,producto.getUnidadMedida().getNombre());
+				ps.setBigDecimal(3, producto.getPrecioVenta());
+				ps.setBoolean(4, producto.isTieneIva());
+				ps.setBigDecimal(5, producto.getCoste());
+				ps.setInt(6, producto.getCategoria().getCodigo());
+				ps.setInt(7, producto.getStock());
+				
+				ps.executeUpdate();					
+							
+			} catch (KrakeDevException e) {
+				throw e;
+			} catch (SQLException e) {
+				throw new KrakeDevException("ERROR AL REALIZAR LA CONSULTA SQL CREAR PRODUCTOS "+e);
+			}finally {
+				try {
+					if (con != null) {
+					    con.close();
+					}
+				} catch (SQLException e) {
+					throw new KrakeDevException("ERROR AL REALZIAR CIERRE DE BDD"+e);
+				}
+			}
+		}
+	
 }
