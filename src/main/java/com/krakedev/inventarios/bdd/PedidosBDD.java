@@ -88,5 +88,69 @@ public class PedidosBDD {
 				}
 			}
 		}
+		
+		
+		//METODO PARA MODIFICAR EL ESTADO DE SOLICITUD DE PEDIDO / ADEMAS  CUANTO RECIBICIO Y MODIFICAR LOS SUBTOTALES
+				public void recibir(Pedido pedido) throws KrakeDevException{
+					Connection con=null;
+					PreparedStatement ps=null;
+					PreparedStatement psDet=null;
+					ResultSet rsClave=null;
+									
+					try {
+						con=ConexionBDD.conectar();
+						String consultaSQL="UPDATE public.cabecera_pedido \r\n"
+								+ "	SET estado=? \r\n"
+								+ "	WHERE numero=?;";
+						ps=con.prepareStatement(consultaSQL);
+						ps.setString(1, "R"); // por defecto va R por que va como RECIBIDO
+						ps.setInt(2, pedido.getCodigo());
+										
+						ps.executeUpdate();
+						
+
+						System.out.println("CODIGO RECIBIDO DE LA CABECERA A MODIFICAR>>>>>> "+pedido.getCodigo());
+						
+						ArrayList<DetallePedido> detallesPedidos=pedido.getDetalles();
+						DetallePedido det;
+						
+						for(int i =0;i<detallesPedidos.size();i++) {
+							det=detallesPedidos.get(i);
+							String consultaSQL2="UPDATE public.detalle_pedido\r\n"
+									+ "	SET cantidad_recibida=?, subtotal=? \r\n"
+									+ "	WHERE codigo_pedido=?;";
+							psDet=con.prepareStatement(consultaSQL2);
+							
+							
+							psDet.setInt(1, det.getCantidadRecibida());
+							
+							//para calcular el subtotal actualizado en base a la cantidad recibida
+							BigDecimal pv=det.getProducto().getPrecioVenta();
+							BigDecimal cantidad=new BigDecimal(det.getCantidadRecibida());
+							BigDecimal subTotal=pv.multiply(cantidad);
+							
+							psDet.setBigDecimal(2, subTotal);
+							psDet.setInt(3, det.getCodigo());
+							System.out.println("CODIGO RECIBIDO DEL DETALLE PEDIDO A MODIFICAR>>>>>> "+det.getCodigo());
+							
+							psDet.executeUpdate();
+							
+						}
+						
+									
+					} catch (KrakeDevException e) {
+						throw e;
+					} catch (SQLException e) {
+						throw new KrakeDevException("ERROR AL REALIZAR LA CONSULTA SQL INSTERTAR CABECERA PEDIDO"+e);
+					}finally {
+						try {
+							if (con != null) {
+							    con.close();
+							}
+						} catch (SQLException e) {
+							throw new KrakeDevException("ERROR AL REALZIAR CIERRE DE BDD"+e);
+						}
+					}
+				}
 	
 }
