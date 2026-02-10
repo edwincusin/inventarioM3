@@ -41,7 +41,7 @@ public class ServiciosPedidos {
 		PedidosBDD pedidosBDD= new PedidosBDD();
 
 		try {
-			pedidosBDD.recibir(pedido);
+			pedidosBDD.actualizarRecibido(pedido);
 			return Response.ok().build(); // devuelve un estatus 200
 
 		} catch (KrakeDevException e) {

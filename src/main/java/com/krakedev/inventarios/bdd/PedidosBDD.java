@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -19,14 +20,14 @@ public class PedidosBDD {
 	//METODO PARA INSERTAR PEDIDO
 		public void insertar(Pedido pedido) throws KrakeDevException{
 			Connection con=null;
-			PreparedStatement ps=null;
-			PreparedStatement psDet=null;
-			ResultSet rsClave=null;
-			int codigoCabecera=0;
+			PreparedStatement ps=null; // PARA CONSULTAS DE CABECERA PEDIDO
+			PreparedStatement psDet=null; // para consultas de DETALLE PEDIDOS
+			ResultSet rsClave=null; // PARA GUARDAR LA PK DE LA CABECERA
+			int codigoCabecera=0; // PARA RECUPERAR LA PK DE LA CABECERA CAPTURADA CON Statement.RETURN_GENERATED_KEYS
 			
 			//CODIGO PAA TOMAR LA FECHA DEL SISTEMA O FECHA ACTUAL
-			Date fechaActual =new Date();
-			java.sql.Date fechaSQL=new java.sql.Date(fechaActual.getTime());
+			Date fechaActual =new Date();//obtiene la fecha y hora actual del sistema
+			java.sql.Date fechaSQL=new java.sql.Date(fechaActual.getTime()); // solo guarda la fecha sin horas 
 			
 			//FIN CODIGO FECHA
 			
@@ -38,10 +39,10 @@ public class PedidosBDD {
 				
 				ps.setString(1, pedido.getProveedor().getIdentificador());
 				ps.setDate(2, fechaSQL);
-				ps.setString(3, "S"); // por defecto va S por que va como SOLICITADO
-								
+				ps.setString(3, "S"); // por defecto va S por que va como SOLICITADO			
 				ps.executeUpdate();
-				
+
+				//----------------------------------------------------------------------------
 				//recupero lo que capturo en el retorno - codigo geenrado de la cabecera
 				rsClave=ps.getGeneratedKeys();
 				if(rsClave.next()) {
@@ -53,14 +54,14 @@ public class PedidosBDD {
 				DetallePedido det;
 				for(int i =0;i<detallesPedidos.size();i++) {
 					det=detallesPedidos.get(i);
-					String consultaSQL2="insert into detalle_pedido (cabecera_pedido, producto, cantidad_solicitada, cantidad_recibida, subtotal)\r\n"
+					String consultaSQL2Det="insert into detalle_pedido (cabecera_pedido, producto, cantidad_solicitada, cantidad_recibida, subtotal)\r\n"
 							+ " values 	(?,?,?,?,?);";
-					psDet=con.prepareStatement(consultaSQL2);
+					psDet=con.prepareStatement(consultaSQL2Det);
 					
 					psDet.setInt(1, codigoCabecera);
 					psDet.setInt(2, det.getProducto().getCodigo());
 					psDet.setInt(3, det.getCantidadSolicitada());
-					psDet.setInt(4, 0); // por defecto va 0 al realizar el pedido
+					psDet.setInt(4, 0); // por defecto va 0 al recibir el pedido
 					
 					//para calcular el subtotal
 					BigDecimal pv=det.getProducto().getPrecioVenta();
@@ -68,11 +69,8 @@ public class PedidosBDD {
 					BigDecimal subTotal=pv.multiply(cantidad);
 					
 					psDet.setBigDecimal(5, subTotal);
-					
-					psDet.executeUpdate();
-					
-				}
-				
+					psDet.executeUpdate();									
+				}				
 							
 			} catch (KrakeDevException e) {
 				throw e;
@@ -87,15 +85,20 @@ public class PedidosBDD {
 					throw new KrakeDevException("ERROR AL REALZIAR CIERRE DE BDD"+e);
 				}
 			}
-		}
-		
+		}		
 		
 		//METODO PARA MODIFICAR EL ESTADO DE SOLICITUD DE PEDIDO / ADEMAS  CUANTO RECIBICIO Y MODIFICAR LOS SUBTOTALES
-				public void recibir(Pedido pedido) throws KrakeDevException{
+				public void actualizarRecibido(Pedido pedido) throws KrakeDevException{
 					Connection con=null;
 					PreparedStatement ps=null;
 					PreparedStatement psDet=null;
-					ResultSet rsClave=null;
+					PreparedStatement psHist=null;
+					
+					//CODIGO PAA TOMAR LA FECHA DEL SISTEMA O FECHA ACTUAL
+					Date fechaActual =new Date();//obtiene la fecha y hora actual del sistema
+					Timestamp fechaHora=new Timestamp(fechaActual.getTime()); // solo guarda la fecha con datos de horas y minutos mas segundos
+					
+					//FIN CODIGO FECHA
 									
 					try {
 						con=ConexionBDD.conectar();
@@ -107,8 +110,7 @@ public class PedidosBDD {
 						ps.setInt(2, pedido.getCodigo());
 										
 						ps.executeUpdate();
-						
-
+						//------------------------------------------------------
 						System.out.println("CODIGO RECIBIDO DE LA CABECERA A MODIFICAR>>>>>> "+pedido.getCodigo());
 						
 						ArrayList<DetallePedido> detallesPedidos=pedido.getDetalles();
@@ -120,8 +122,7 @@ public class PedidosBDD {
 									+ "	SET cantidad_recibida=?, subtotal=? \r\n"
 									+ "	WHERE codigo_pedido=?;";
 							psDet=con.prepareStatement(consultaSQL2);
-							
-							
+														
 							psDet.setInt(1, det.getCantidadRecibida());
 							
 							//para calcular el subtotal actualizado en base a la cantidad recibida
@@ -135,8 +136,22 @@ public class PedidosBDD {
 							
 							psDet.executeUpdate();
 							
-						}
-						
+							
+							//CODIGO PARA INSERTAR EN LA TABLA HISTORIAL
+							
+							String consultaSQL3Hist="INSERT INTO public.historial_stock(fecha, referencia, producto, cantidad)"
+									+ "	VALUES (?, ?, ?, ?);";
+							psHist=con.prepareStatement(consultaSQL3Hist);
+							
+							psHist.setTimestamp(1, fechaHora);
+							psHist.setString(2, "PEDIDO "+pedido.getCodigo());
+							psHist.setInt(3, det.getProducto().getCodigo());
+							psHist.setInt(4, det.getCantidadRecibida());
+							psHist.executeUpdate();
+														
+							System.out.println("se agrega un pedido al historial: "+psHist);
+							
+						}						
 									
 					} catch (KrakeDevException e) {
 						throw e;
