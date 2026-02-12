@@ -17,7 +17,7 @@ import com.krakedev.inventarios.utils.ConexionBDD;
 
 public class PedidosBDD {
 
-	//METODO PARA INSERTAR PEDIDO
+	//METODO PARA INSERTAR PEDIDO  CONS SUS DETALLES 
 		public void insertar(Pedido pedido) throws KrakeDevException{
 			Connection con=null;
 			PreparedStatement ps=null; // PARA CONSULTAS DE CABECERA PEDIDO
