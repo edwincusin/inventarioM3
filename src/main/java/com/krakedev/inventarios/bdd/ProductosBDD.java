@@ -92,7 +92,7 @@ public class ProductosBDD {
 		return productos;
 	}
 	
-	//
+	
 	//METODO PARA CREAR NUEVO PRODUCTO EN LA BASE DE DATOS
 		public void crear(Producto producto) throws KrakeDevException{
 			Connection con=null;
@@ -119,6 +119,46 @@ public class ProductosBDD {
 				throw e;
 			} catch (SQLException e) {
 				throw new KrakeDevException("ERROR AL REALIZAR LA CONSULTA SQL CREAR PRODUCTOS "+e);
+			}finally {
+				try {
+					if (con != null) {
+					    con.close();
+					}
+				} catch (SQLException e) {
+					throw new KrakeDevException("ERROR AL REALZIAR CIERRE DE BDD"+e);
+				}
+			}
+		}
+		
+		//METODO PARA MODIFICAR O ACTUALIZAR TODOS LOS CAMPOS
+		public void actualizar(Producto producto) throws KrakeDevException{
+			Connection con=null;
+			PreparedStatement ps=null;
+			
+			try {
+				con=ConexionBDD.conectar();
+				String consultaSQL="UPDATE public.productos\r\n"
+						+ "	SET nombre=?, udm=?, precio_venta=?, tiene_iva=?, coste=?, categoria=?, stock=?"
+						+ "	WHERE codigo_prod=?;";
+				ps=con.prepareStatement(consultaSQL);
+				
+				ps.setString(1, producto.getNombre());
+				ps.setString(2,producto.getUnidadMedida().getNombre());
+				ps.setBigDecimal(3, producto.getPrecioVenta());
+				ps.setBoolean(4, producto.isTieneIva());
+				ps.setBigDecimal(5, producto.getCoste());
+				ps.setInt(6, producto.getCategoria().getCodigo());
+				ps.setInt(7, producto.getStock());
+				ps.setInt(8, producto.getCodigo());
+				
+				ps.executeUpdate();	
+				
+				System.out.println("Prouducto actualizado "+ps);
+							
+			} catch (KrakeDevException e) {
+				throw e;
+			} catch (SQLException e) {
+				throw new KrakeDevException("ERROR AL REALIZAR LA CONSULTA SQL ACTUALIZAR PRODUCTO "+e);
 			}finally {
 				try {
 					if (con != null) {

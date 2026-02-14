@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -47,6 +48,24 @@ public class ServiciosProductos {
 
 		try {
 			prodBDD.crear(producto);
+			return Response.ok().build(); // devuelve un estatus 200
+
+		} catch (KrakeDevException e) {
+			e.printStackTrace();
+			return Response.serverError().build(); // si algo falla devuelve 500
+		}
+	}
+	
+	// SERVICIO PARA ACTUALIZAR PRODUCTO
+	@Path("actualizar")
+	@PUT
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response actualizar(Producto producto) {
+		System.out.println("ACTUALIZANDO PRODUCTO >>>>"+producto);
+		ProductosBDD prodBDD = new ProductosBDD();
+
+		try {
+			prodBDD.actualizar(producto);
 			return Response.ok().build(); // devuelve un estatus 200
 
 		} catch (KrakeDevException e) {
