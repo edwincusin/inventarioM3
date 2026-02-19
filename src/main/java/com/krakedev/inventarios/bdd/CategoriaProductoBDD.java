@@ -2,7 +2,9 @@ package com.krakedev.inventarios.bdd;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import com.krakedev.inventarios.entidades.CategoriaProducto;
 import com.krakedev.inventarios.excepciones.KrakeDevException;
@@ -72,6 +74,55 @@ public class CategoriaProductoBDD {
 					
 				ps.executeUpdate();					
 							
+			} catch (KrakeDevException e) {
+				throw e;
+			} catch (SQLException e) {
+				throw new KrakeDevException("ERROR AL REALIZAR LA CONSULTA SQL MODIFICAR O ACTUALIZAR||MODIFICAR CATEGORIA"+e);
+			}finally {
+				try {
+					if (con != null) {
+					    con.close();
+					}
+				} catch (SQLException e) {
+					throw new KrakeDevException("ERROR AL REALZIAR CIERRE DE BDD"+e);
+				}
+			}
+		}
+		
+		//METODO PARA RECUPERAR TODAS CATEGORIAS PARA PRODCUTOS EN LA BDD - TABLA categorias
+		public ArrayList<CategoriaProducto> recuperar() throws KrakeDevException{
+			Connection con=null;
+			PreparedStatement ps=null;
+			ArrayList<CategoriaProducto> categorias=new ArrayList<CategoriaProducto>();
+			ResultSet rs=null;
+			
+			try {
+				con=ConexionBDD.conectar();
+				String consultaSQL="SELECT codigo_cat, nombre, categoria_padre\r\n"
+						+ "	FROM public.categorias;";
+				ps=con.prepareStatement(consultaSQL);
+				rs=ps.executeQuery();
+				
+				while(rs.next()) {
+					CategoriaProducto categoria=new CategoriaProducto();
+					int codigoCategoria=rs.getInt("codigo_cat");
+					String nombreCategoria=rs.getString("nombre");
+					int categoriaPadre=rs.getInt("categoria_padre");
+					
+					categoria.setCodigo(codigoCategoria);
+					categoria.setNombre(nombreCategoria);
+					
+					if(categoriaPadre==0) {
+						categoria.setCategoriaPadre(null);
+					}else {
+						CategoriaProducto padre= new CategoriaProducto();
+						padre.setCodigo(categoriaPadre);
+						categoria.setCategoriaPadre(padre);
+					}						
+					categorias.add(categoria);
+				}
+			
+				return categorias; 		
 			} catch (KrakeDevException e) {
 				throw e;
 			} catch (SQLException e) {

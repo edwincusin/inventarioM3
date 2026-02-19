@@ -1,9 +1,13 @@
 package com.krakedev.inventarios.servicios;
 
+import java.util.ArrayList;
+
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -42,6 +46,23 @@ public class ServiciosCategoriaProducto {
 		try {
 			categoriaBDD.actualizar(categoria);
 			return Response.ok().build(); // devuelve un estatus 200
+		} catch (KrakeDevException e) {
+			e.printStackTrace();
+			return Response.serverError().build(); // si algo falla devuelve 500
+		}
+	}
+	
+	//METODO PARA RECUPERAR TODAS CATEGORIAS PARA PRODCUTOS EN LA BDD - TABLA categorias	@Path("actualizar")
+	@Path("recuperar")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response recuperar() {
+		System.out.println("RECUPERANDO CATEGORIAS >>>>");
+		CategoriaProductoBDD categoriaBDD=new CategoriaProductoBDD();
+		ArrayList<CategoriaProducto> categorias=new ArrayList<CategoriaProducto>();
+		try {
+			categorias=categoriaBDD.recuperar();
+			return Response.ok(categorias).build(); // devuelve un estatus 200
 		} catch (KrakeDevException e) {
 			e.printStackTrace();
 			return Response.serverError().build(); // si algo falla devuelve 500
