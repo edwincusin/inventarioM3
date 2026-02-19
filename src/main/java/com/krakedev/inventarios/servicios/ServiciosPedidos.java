@@ -1,9 +1,14 @@
 package com.krakedev.inventarios.servicios;
 
+import java.util.ArrayList;
+
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -43,6 +48,25 @@ public class ServiciosPedidos {
 		try {
 			pedidosBDD.actualizarRecibido(pedido);
 			return Response.ok().build(); // devuelve un estatus 200
+
+		} catch (KrakeDevException e) {
+			e.printStackTrace();
+			return Response.serverError().build(); // si algo falla devuelve 500
+		}
+	}
+	
+	//METODO PARA Recupera los pedidos con sus respectivos detalles de un proveedor determinado. Recibe el identificador del proveedor.
+	@Path("buscar/{identificador}")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response buscar(@PathParam ("identificador") String identificador) {
+		System.out.println("BUSCANDO PEDIDOS >>>>");
+		PedidosBDD pedidosBDD= new PedidosBDD();
+		ArrayList<Pedido> pedidos=new ArrayList<Pedido>();
+
+		try {
+			pedidos=pedidosBDD.buscarPorIdentificador(identificador);
+			return Response.ok(pedidos).build(); // devuelve un estatus 200
 
 		} catch (KrakeDevException e) {
 			e.printStackTrace();

@@ -11,7 +11,10 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import com.krakedev.inventarios.entidades.DetallePedido;
+import com.krakedev.inventarios.entidades.EstadoPedido;
 import com.krakedev.inventarios.entidades.Pedido;
+import com.krakedev.inventarios.entidades.Producto;
+import com.krakedev.inventarios.entidades.Proveedor;
 import com.krakedev.inventarios.excepciones.KrakeDevException;
 import com.krakedev.inventarios.utils.ConexionBDD;
 
@@ -157,6 +160,94 @@ public class PedidosBDD {
 						throw e;
 					} catch (SQLException e) {
 						throw new KrakeDevException("ERROR AL REALIZAR LA CONSULTA SQL INSTERTAR CABECERA PEDIDO"+e);
+					}finally {
+						try {
+							if (con != null) {
+							    con.close();
+							}
+						} catch (SQLException e) {
+							throw new KrakeDevException("ERROR AL REALZIAR CIERRE DE BDD"+e);
+						}
+					}
+				}
+				
+				
+				//METODO PARA Recupera los pedidos con sus respectivos detalles de un proveedor determinado. Recibe el identificador del proveedor.
+				public ArrayList<Pedido> buscarPorIdentificador(String identificadorProveedor) throws KrakeDevException{
+					Connection con=null;
+					PreparedStatement ps=null;
+					PreparedStatement psDet=null;
+					ResultSet rs=null;
+					ResultSet rsDet=null;
+					ArrayList<Pedido> pedidos= new ArrayList<Pedido>();
+									
+					try {
+						con=ConexionBDD.conectar();
+						String consultaSQL="SELECT numero AS numeroPedido, proveedor, fecha, estado\r\n"
+								+ "	FROM cabecera_pedido\r\n"
+								+ "	WHERE proveedor like ? \r\n"
+								+ "	ORDER BY fecha ASC;";
+						ps=con.prepareStatement(consultaSQL);
+						ps.setString(1, identificadorProveedor+"%");
+						
+						rs=ps.executeQuery();
+						
+						while(rs.next()) {
+							
+							int codigoPedido=rs.getInt("numeroPedido");
+							
+							Proveedor proveedor=new Proveedor();
+							proveedor.setIdentificador(rs.getString("proveedor"));
+							
+							Date fecha=rs.getDate("fecha");
+							
+							EstadoPedido estadoPedido=new EstadoPedido();
+							estadoPedido.setCodigo(rs.getString("estado"));
+							
+							String consultaSQLDetalle="SELECT codigo_pedido, "
+									+ " cabecera_pedido, "
+									+ " producto, "
+									+ " cantidad_solicitada, "
+									+ " cast(subtotal AS DECIMAL(6,4)), "
+									+ " cantidad_recibida\r\n"
+									+ "	FROM public.detalle_pedido\r\n"
+									+ "	WHERE cabecera_pedido=?;";
+							psDet=con.prepareStatement(consultaSQLDetalle);
+							psDet.setInt(1, codigoPedido);
+							rsDet=psDet.executeQuery();
+							
+
+							ArrayList<DetallePedido> detalles= new ArrayList<DetallePedido>();
+							
+							while(rsDet.next()) {
+								
+								int codigoDetalle=rsDet.getInt("codigo_pedido");
+								Pedido codPedido= new Pedido();
+								codPedido.setCodigo(rsDet.getInt("cabecera_pedido"));
+								
+								Producto producto=new Producto();
+								producto.setCodigo(rsDet.getInt("producto"));
+								
+								int cantidadSolicitada=rsDet.getInt("cantidad_solicitada");
+								BigDecimal subtotal=rsDet.getBigDecimal("subtotal");
+								int cantidadRecibida=rsDet.getInt("cantidad_recibida");
+								
+								DetallePedido detalle= new DetallePedido(codigoDetalle, codPedido, producto, cantidadSolicitada, subtotal, cantidadRecibida);
+								detalles.add(detalle);
+							}
+							
+							Pedido pedido=new Pedido(codigoPedido, proveedor, fecha, estadoPedido, detalles);
+							pedidos.add(pedido);
+							
+						}
+						
+						return pedidos;
+						
+									
+					} catch (KrakeDevException e) {
+						throw e;
+					} catch (SQLException e) {
+						throw new KrakeDevException("ERROR AL REALIZAR LA CONSULTA SQL BUSCAR PEDIDOS Y DETALLES"+e);
 					}finally {
 						try {
 							if (con != null) {
