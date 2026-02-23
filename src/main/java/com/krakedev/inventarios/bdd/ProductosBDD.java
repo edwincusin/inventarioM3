@@ -169,5 +169,82 @@ public class ProductosBDD {
 				}
 			}
 		}
+		
+		//METODO PARA RECUPERAR  el producto recibe el identificador del producto como path param
+		public Producto recuperarPorIdentificador(int codigoProductoBuscar) throws KrakeDevException{
+			Producto producto=null;
+			Connection con=null;
+			PreparedStatement ps=null;
+			ResultSet rs=null;
+			
+			try {
+
+				con=ConexionBDD.conectar();
+				String consultaSQL="select prod.codigo_prod, \r\n"
+						+ "	   prod.nombre as nombre_producto,\r\n"
+						+ "	   udm.nombre as nombre_UDM,\r\n"
+						+ "	   udm.descripcion as descripcion_udm,\r\n"
+						+ "	   cast(prod.precio_venta as decimal(6,2)),\r\n"
+						+ "	   prod.tiene_iva,\r\n"
+						+ "	   cast(prod.coste as decimal(5,4)),\r\n"
+						+ "	   prod.categoria,\r\n"
+						+ "	   cat.nombre as nombre_categoria,\r\n"
+						+ "	   prod.stock\r\n"
+						+ "from productos as prod, unidades_medida as udm, categorias as cat\r\n"
+						+ "where prod.udm = udm.nombre\r\n"
+						+ "and prod.categoria = cat.codigo_cat\r\n"
+						+ "and prod.codigo_prod = ?;";
+				ps=con.prepareStatement(consultaSQL);
+				
+				ps.setInt(1, codigoProductoBuscar);	
+				rs=ps.executeQuery();
+				
+				
+				if(rs.next()){
+					int codigoProducto=rs.getInt("codigo_prod");
+					String nombreProducto=rs.getString("nombre_producto");
+					BigDecimal precioVenta=rs.getBigDecimal("precio_venta");
+					boolean tieneIva=rs.getBoolean("tiene_iva");
+					BigDecimal coste=rs.getBigDecimal("coste");
+					int stock = rs.getInt("stock");
+										
+					
+					String nombreUDM=rs.getString("nombre_UDM"); //es el codigo o clave primaria de udm
+					String descripcionUDM=rs.getString("descripcion_udm");
+					
+					UnidadDeMedida udm=new UnidadDeMedida(nombreUDM, descripcionUDM, null);
+									
+					int codigoCategoria = rs.getInt("categoria");
+					String nombreCategoria = rs.getString("nombre_categoria");
+					
+					CategoriaProducto categoriaProducto=new CategoriaProducto(codigoCategoria, nombreCategoria, null);
+					
+					producto= new Producto();
+					producto.setCodigo(codigoProducto);
+					producto.setNombre(nombreProducto);
+					producto.setUnidadMedida(udm);
+					producto.setPrecioVenta(precioVenta);
+					producto.setTieneIva(tieneIva);
+					producto.setCoste(coste);
+					producto.setCategoria(categoriaProducto);
+					producto.setStock(stock);
+				}
+							
+			} catch (KrakeDevException e) {
+				throw e;
+			} catch (SQLException e) {
+				throw new KrakeDevException("ERROR AL REALIZAR LA CONSULTA SQL RECUPERAR PRODUCTOS "+e);
+			}finally {
+				try {
+					if (con != null) {
+					    con.close();
+					}
+				} catch (SQLException e) {
+					throw new KrakeDevException("ERROR AL REALZIAR CIERRE DE BDD"+e);
+				}
+			}
+			return producto;
+		}
+		
 	
 }

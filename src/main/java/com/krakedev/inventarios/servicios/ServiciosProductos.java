@@ -73,5 +73,29 @@ public class ServiciosProductos {
 			return Response.serverError().build(); // si algo falla devuelve 500
 		}
 	}
+	
+	// SERVICIO PARA RECUPERAR UN PRODCUTO MEDIANTE UN IDENTIFICADOR 
+		@Path("recuperar/{identificador}")
+		@GET
+		@Produces(MediaType.APPLICATION_JSON)
+		public Response buscar(@PathParam("identificador") int identificador) {
+			System.out.println("CONSULTANDO PRODUCTO>>>>");
+			ProductosBDD prodBDD = new ProductosBDD();
+			Producto producto = null;
+
+			try {
+				producto = prodBDD.recuperarPorIdentificador(identificador);
+				if(producto !=null) {
+					return Response.ok(producto).build(); // devuelve un estatus 200
+				}else {
+					return Response.ok("NO EXISTE PRODUCTO CON EL IDENTIFICADOR INGRESADO "+identificador).build(); // devuelve un estatus 200
+				}
+				
+
+			} catch (KrakeDevException e) {
+				e.printStackTrace();
+				return Response.serverError().build(); // si algo falla devuelve 500
+			}
+		}
 
 }
