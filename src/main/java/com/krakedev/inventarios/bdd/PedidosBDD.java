@@ -185,10 +185,10 @@ public class PedidosBDD {
 						con=ConexionBDD.conectar();
 						String consultaSQL="SELECT numero AS numeroPedido, proveedor, fecha, estado\r\n"
 								+ "	FROM cabecera_pedido\r\n"
-								+ "	WHERE proveedor like ? \r\n"
+								+ "	WHERE proveedor =? \r\n"
 								+ "	ORDER BY fecha ASC;";
 						ps=con.prepareStatement(consultaSQL);
-						ps.setString(1, identificadorProveedor+"%");
+						ps.setString(1, identificadorProveedor);
 						
 						rs=ps.executeQuery();
 						

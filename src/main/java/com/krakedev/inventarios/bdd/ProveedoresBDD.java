@@ -99,4 +99,60 @@ public class ProveedoresBDD {
 				}
 			}
 		}
+		
+		//METODO PARA recupera el proveedor, recibe el indenficador del proveedor como parametro 
+				public Proveedor recuperarProveedor(String identificadorBuscar) throws KrakeDevException{
+					Connection con=null;
+					PreparedStatement ps=null;
+					ResultSet rs=null;
+					
+					Proveedor proveedorRecuperado=null;
+					try {
+						con=ConexionBDD.conectar();
+						String consultaSQL="SELECT identificador, tipo_documento, nombre, telefono, correo, direccion\r\n"
+								+ "	FROM public.proveedor\r\n"
+								+ "	WHERE identificador = ?;";
+						ps=con.prepareStatement(consultaSQL);
+						
+						ps.setString(1,identificadorBuscar);
+						rs=ps.executeQuery();
+						
+						if(rs.next()) {
+							
+							proveedorRecuperado = new Proveedor();
+							String identificador = rs.getString("identificador");
+							
+							TipoDocumento tipoDocumento = new TipoDocumento();
+							tipoDocumento.setCodigoTipoDocumento(rs.getString("tipo_documento"));
+							
+							String nombre=rs.getString("nombre");
+							String telefono=rs.getString("telefono");
+							String correo=rs.getString("correo");
+							String direccion=rs.getString("direccion");
+							
+							proveedorRecuperado.setIdentificador(identificador);
+							proveedorRecuperado.setTipoDocumento(tipoDocumento);
+							proveedorRecuperado.setNombre(nombre);
+							proveedorRecuperado.setTelefono(telefono);
+							proveedorRecuperado.setCorreo(correo);
+							proveedorRecuperado.setDireccion(direccion);
+						}
+						
+						return proveedorRecuperado;
+									
+									
+					} catch (KrakeDevException e) {
+						throw e;
+					} catch (SQLException e) {
+						throw new KrakeDevException("ERROR AL REALIZAR LA CONSULTA SQL GUARDAR NUEVO PROVEEDOR "+e);
+					}finally {
+						try {
+							if (con != null) {
+							    con.close();
+							}
+						} catch (SQLException e) {
+							throw new KrakeDevException("ERROR AL REALZIAR CIERRE DE BDD"+e);
+						}
+					}
+				}
 }

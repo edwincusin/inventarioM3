@@ -57,5 +57,28 @@ public class ServiciosProveedores {
 		}
 	}
 	
+	// SERVICIO PARA RECUPERAR PROVEEDOR MEDIANTE IDENTIFICADOR
+	@Path("recuperar/{identificador}")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response recuperar(@PathParam("identificador") String identificador){
+		System.out.println("CONSULTANDO PROVEEDOR>>>>");
+		ProveedoresBDD provBDD= new ProveedoresBDD();
+		Proveedor proveedor =null;
+		
+		try {
+			proveedor = provBDD.recuperarProveedor(identificador);
+			if(proveedor==null) {
+				return Response.ok("No existe proveedor con este identificador "+identificador).build();  //devuelve un estatus 200 
+			}else {
+				return Response.ok(proveedor).build();  //devuelve un estatus 200 
+			}	
+			
+		} catch (KrakeDevException e) {
+			e.printStackTrace();
+			return Response.serverError().build();  // si algo falla devuelve 500
+		}
+	}
+	
 	
 }
